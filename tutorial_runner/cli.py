@@ -1,18 +1,48 @@
-# -*- coding: utf-8 -*-
-
-"""Console script for tutorial_runner."""
 import sys
 import click
 
+from tutorial_runner import state
 
-@click.command()
+
+@click.group()
 def tutorial(args=None):
-    """Console script for tutorial_runner."""
-    click.echo("Replace this message by putting your code into "
-               "tutorial_runner.cli.main")
-    click.echo("See click documentation at http://click.pocoo.org/")
-    return 0
+    """Click tutorial runner."""
 
+
+@tutorial.command()
+def hint():
+    """Get a hint for the current lesson."""
+    click.echo("Hints coming soon!")
+
+
+@tutorial.command()
+@click.option(
+    "--reinitialize",
+    "-r",
+    is_flag=True,
+    help="Clear progress and reinitialize tutorial.",
+)
+def init(reinitialize):
+    """(Re-)Initialize the tutorial"""
+    if state.is_initialized() and reinitialize is not True:
+        click.confirm(
+            "Already initialized. Do you want to clear progress and start over?",
+            abort=True,
+        )
+    state.initialize()
+    click.echo("Tutorial initialized! Time to start your first lesson!")
+
+
+@tutorial.command()
+def status():
+    """Show the status of your progress."""
+    click.echo("OK")
+
+
+@tutorial.command()
+def verify():
+    """Verify that your environment is set up correctly."""
+    raise NotImplementedError()
 
 if __name__ == "__main__":
-    sys.exit(tutorial())  # pragma: no cover
+    sys.exit(main())  # pragma: no cover
