@@ -44,5 +44,6 @@ def verify():
     """Verify that your environment is set up correctly."""
     raise NotImplementedError()
 
+
 if __name__ == "__main__":
     sys.exit(main())  # pragma: no cover
