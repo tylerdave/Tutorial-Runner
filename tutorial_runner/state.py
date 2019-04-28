@@ -21,7 +21,11 @@ class State:
             with open(self.state_file_path, mode="r", encoding="utf-8") as statefile:
                 return pytoml.load(statefile)
         except FileNotFoundError as e:
-            raise click.ClickException("Tutorial status file not found. You probably need to run `tutorial init`. \nDetails: {}".format(e))
+            raise click.ClickException(
+                "Tutorial status file not found. You probably need to run `tutorial init`. \nDetails: {}".format(
+                    e
+                )
+            )
 
     def initialize(self, config_filename):
         with open(config_filename) as configfile:
@@ -61,6 +65,28 @@ class State:
         state["progress"][progress_key] = status
         self.save(state)
 
+    def get_next_lesson_id(self, part_id, lesson_id):
+        state = self.load()
+        part = [p for p in state["parts"] if p["id"] == part_id][0]
+        try:
+            lesson = [l for l in part["lessons"] if l["id"] == lesson_id + 1][0]
+            return (part["id"], lesson["id"])
+        except IndexError:
+            try:
+                part = [p for p in state["parts"] if p["id"] == part_id + 1][0]
+                return (part["id"], 1)
+            except IndexError:
+                return None, None
+
+    def complete_lesson(self, part_id, lesson_id):
+        self.set_lesson_status(part_id, lesson_id, "complete")
+        next_part_id, next_lesson_id = self.get_next_lesson_id(part_id, lesson_id)
+        if next_lesson_id is not None:
+            self.set_current_lesson(next_part_id, next_lesson_id)
+            return next_part_id, next_lesson_id
+        else:
+            return None
+
     def get_current_part_id(self):
         state = self.load()
         return state.get("current", {}).get("part")
@@ -73,26 +99,34 @@ class State:
         part_id = self.get_current_part_id()
         lesson_id = self.get_current_lesson_id()
         state = self.load()
-        part = [p for p in state['parts'] if p['id'] == part_id][0]
-        lesson = [l for l in part['lessons'] if l['id'] == lesson_id][0]
-        lesson['part'] = part
-        lesson['tutorial_dir'] = state['tutorial_dir']
+        part = [p for p in state["parts"] if p["id"] == part_id][0]
+        lesson = [l for l in part["lessons"] if l["id"] == lesson_id][0]
+        lesson["part"] = part
+        lesson["tutorial_dir"] = state["tutorial_dir"]
         return lesson
-    
+
     def set_current_lesson(self, part_id, lesson_id):
         state = self.load()
         try:
-            part = [p for p in state['parts'] if p['id'] == part_id][0]
+            part = [p for p in state["parts"] if p["id"] == part_id][0]
         except IndexError:
-            raise click.ClickException('{} is not a valid part ID. See `tutorial status` for a list of parts and lessons.'.format(part_id))
+            raise click.ClickException(
+                "{} is not a valid part ID. See `tutorial status` for a list of parts and lessons.".format(
+                    part_id
+                )
+            )
         try:
-            lesson = [l for l in part['lessons'] if l['id'] == lesson_id][0]
+            lesson = [l for l in part["lessons"] if l["id"] == lesson_id][0]
         except IndexError:
-            raise click.ClickException('{} is not a valid lesson ID for part {:02d}. See `tutorial status` for a list of parts and lessons.'.format(lesson_id, part_id))
-        state['current'] = {"part": part_id, "lesson": lesson_id}
+            raise click.ClickException(
+                "{} is not a valid lesson ID for part {:02d}. See `tutorial status` for a list of parts and lessons.".format(
+                    lesson_id, part_id
+                )
+            )
+        state["current"] = {"part": part_id, "lesson": lesson_id}
         self.save(state)
-        self.set_lesson_status(part_id, lesson_id, 'in-progress')
+        self.set_lesson_status(part_id, lesson_id, "in-progress")
 
     def list_parts(self):
         state = self.load()
-        return state['parts']
+        return state["parts"]
