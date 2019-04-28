@@ -2,6 +2,9 @@ import sys
 import click
 import pathlib
 import pytest
+import shutil
+
+from datetime import datetime
 
 from tutorial_runner.state import State
 
@@ -48,14 +51,22 @@ def init(obj, config, reinitialize):
 
 @tutorial.command()
 @click.pass_obj
-@click.argument("lesson-id", type=click.INT)
+@click.option("--lesson-id", "-l", type=click.INT, help="Specify lesson ID (defaults to current)")
 @click.option("--part-id", "-p", type=click.INT, help="Specify part ID (defaults to current)")
 def lesson(obj, lesson_id, part_id):
     """Switch to a specific lesson"""
     state = obj["state"]
     if part_id is None:
         part_id = state.get_current_part_id()
+    if lesson_id is None:
+        lesson_id = state.get_current_lesson_id()
     state.set_current_lesson(part_id, lesson_id)
+    lesson = state.get_current_lesson()
+    working_path = pathlib.Path(lesson['tutorial_dir'], lesson['part']['dir'], lesson['part']['file'])
+
+    click.echo("Now working on Part {:02d}, Lesson {:02d}".format(part_id, lesson_id))
+    click.echo(" Working file: {}".format(working_path))
+    click.echo("    Objective:")
 
 
 @tutorial.command()
@@ -78,7 +89,7 @@ def status(obj):
             click.echo("{id:02d} - {name:20} - {_status}".format(**lesson))
 
 def run_lesson(lesson_test_file):
-    result = pytest.main(['-vx', 'tutorial/{0}'.format(lesson_test_file)])
+    result = pytest.main(['-vx', '{0}'.format(lesson_test_file)])
     if result == 0:
         return True
     else:
@@ -91,12 +102,49 @@ def check(obj):
     state = obj['state']
     lesson = state.get_current_lesson()
     test_path = str(pathlib.Path(lesson['tutorial_dir'], lesson['part']['dir'], 'tests',lesson['test']))
-    print(test_path)
-    result = pytest.main(['-vx', test_path])
-    if result == 0:
-        print("Success!")
+    result = run_lesson(test_path)
+    if result:
+        click.echo("All tests passed!")
+        state.set_lesson_status(lesson['part']['id'], lesson['id'], 'complete')
+        click.echo("You can now start the next lesson with `tutorial lesson`.")
     else:
-        print("Failed :-(")
+        click.echo("Some tests failed. See the instructions and the test output and try again!")
+
+@tutorial.command()
+@click.pass_obj
+def peek(obj):
+    """Look at the solution file without overwriting your work."""
+    state = obj['state']
+    lesson = state.get_current_lesson()
+    solution_path = str(pathlib.Path(lesson['tutorial_dir'], lesson['part']['dir'], 'solutions',lesson['solution']))
+    with open(solution_path) as solutionfile:
+        solution_source = solutionfile.read()
+    click.echo("Solution in {}:\n --------------------".format(solution_path))
+    click.echo(solution_source)
+    click.echo(" --------------------\n")
+
+@tutorial.command()
+@click.pass_obj
+def solve(obj):
+    """Copy the solution file to the working file."""
+    state = obj['state']
+    lesson = state.get_current_lesson()
+    solution_path = pathlib.Path(lesson['tutorial_dir'], lesson['part']['dir'], 'solutions',lesson['solution'])
+    working_path = pathlib.Path(lesson['tutorial_dir'], lesson['part']['dir'], lesson['part']['file'])
+    backup_filename = lesson['part']['file'].replace('.py', '.{}.py'.format(datetime.now().strftime("%Y-%m-%d.%H-%M-%S")))
+    backup_path = pathlib.Path(lesson['tutorial_dir'], lesson['part']['dir'], backup_filename)
+    click.echo("This will make a backup of the working file and then copy the solution file into place.")
+    click.echo("  Working file: {}".format(working_path))
+    click.echo("   Backup file: {}".format(backup_path))
+    click.echo(" Solution file: {}".format(solution_path))
+    click.confirm(
+          "Do you wish to proceed?",
+            abort=True,
+        )
+    click.echo("Making backup file: {}".format(backup_path))
+    shutil.copy(str(working_path), str(backup_path))
+    click.echo("Copying solution into place...")
+    shutil.copy(str(solution_path), str(working_path))
 
 
 if __name__ == "__main__":

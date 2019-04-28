@@ -92,7 +92,7 @@ class State:
         state['current'] = {"part": part_id, "lesson": lesson_id}
         self.save(state)
         self.set_lesson_status(part_id, lesson_id, 'in-progress')
-         
+
     def list_parts(self):
         state = self.load()
         return state['parts']
