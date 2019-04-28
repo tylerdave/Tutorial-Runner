@@ -26,11 +26,13 @@ A command line interface for running tutorial lessons.
 * Free software: Mozilla Public License 2.0 (MPL 2.0)
 * Documentation: https://tutorial-runner.readthedocs.io.
 
+Experimental
+------------
 
-Features
---------
+**Note:** This thing is super experimental and makes a lot of assumptions about
+the tutorial layout. It was developed for a single tutorial and may not be
+update to support anything more.
 
-* TODO
 
 Credits
 -------
