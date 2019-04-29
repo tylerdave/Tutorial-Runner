@@ -1,6 +1,7 @@
 import sys
 import click
 import pathlib
+import pkg_resources
 import pytest
 import shutil
 
@@ -9,19 +10,12 @@ from datetime import datetime
 from tutorial_runner.state import State
 
 
-@click.group()
+@click.group(name='tutorial-runner')
 @click.pass_context
 def tutorial(ctx):
     """Click tutorial runner."""
     ctx.ensure_object(dict)
     ctx.obj["state"] = State()
-
-
-@tutorial.command()
-def hint():
-    """Get a hint for the current lesson."""
-    click.echo("Hints coming soon!")
-
 
 @tutorial.command()
 @click.pass_obj
@@ -70,9 +64,12 @@ def lesson(obj, lesson_id, part_id):
         lesson["tutorial_dir"], lesson["part"]["dir"], lesson["part"]["file"]
     )
 
-    click.echo("Now working on Part {:02d}, Lesson {:02d}".format(part_id, lesson_id))
-    click.echo(" Working file: {}".format(working_path))
-    click.echo("    Objective:")
+    click.echo("Currently working on Part {:02d}, Lesson {:02d} - {}".format(part_id, lesson_id, lesson['name']))
+    click.echo("\nWorking file: {}".format(working_path))
+    if lesson.get("doc-urls"):
+        click.echo("Related docs: {}".format(lesson.get('doc-urls')))
+    if lesson.get("objectives"):
+        click.echo("\nObjectives:\n{}".format(lesson.get('objectives')))
 
 
 @tutorial.command()
@@ -129,8 +126,8 @@ def check(ctx, obj):
             current_lesson["part"]["id"], current_lesson["id"]
         )
         if next_lesson is not None:
-            click.echo("Now running `tutorial lesson`...")
-            ctx.invoke(lesson)
+            click.echo("Ready to proceed to Part {}, Lesson {}!".format(*next_lesson))
+            click.echo("Continue by running `tutorial lesson`")
         else:
             click.echo("Last lesson complete! 🎉")
     else:
@@ -190,7 +187,13 @@ def solve(obj):
     shutil.copy(str(working_path), str(backup_path))
     click.echo("Copying solution into place...")
     shutil.copy(str(solution_path), str(working_path))
+    click.echo("You may now complete the lesson by running `tutorial check`.")
+
+@tutorial.command()
+def version():
+    """Display the version of this command."""
+    click.echo("Tutorial-Runner {}".format(pkg_resources.get_distribution("tutorial-runner").version))
 
 
 if __name__ == "__main__":
-    sys.exit(main())  # pragma: no cover
+    sys.exit(tutorial())
