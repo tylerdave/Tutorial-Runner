@@ -121,7 +121,7 @@ def check(ctx, obj):
     )
     result = run_lesson(test_path)
     if result:
-        click.secho("All tests passed! ✨🐍✨", fg="green")
+        click.secho("All tests passed!", fg="green")
         next_lesson = state.complete_lesson(
             current_lesson["part"]["id"], current_lesson["id"]
         )
@@ -129,9 +129,9 @@ def check(ctx, obj):
             click.echo("Ready to proceed to Part {}, Lesson {}!".format(*next_lesson))
             click.echo("Continue by running `tutorial lesson`")
         else:
-            click.echo("Last lesson complete! 🎉")
+            click.echo("Last lesson complete!")
     else:
-        click.secho("Some tests failed. 🤔", fg="red")
+        click.secho("Some tests failed.", fg="red")
         click.echo(
             "Review the lesson instructions and the test output above and try again!"
         )
