@@ -160,7 +160,8 @@ def peek(obj):
 
 @tutorial.command()
 @click.pass_obj
-def solve(obj):
+@click.option('--yes', '-y', is_flag=True)
+def solve(obj, yes):
     """Copy the solution file to the working file."""
     state = obj["state"]
     lesson = state.get_current_lesson()
@@ -182,7 +183,8 @@ def solve(obj):
     click.echo("  Working file: {}".format(working_path))
     click.echo("   Backup file: {}".format(backup_path))
     click.echo(" Solution file: {}".format(solution_path))
-    click.confirm("Do you wish to proceed?", abort=True)
+    if not yes:
+        click.confirm("Do you wish to proceed?", abort=True)
     click.echo("Making backup file: {}".format(backup_path))
     shutil.copy(str(working_path), str(backup_path))
     click.echo("Copying solution into place...")
