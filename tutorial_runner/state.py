@@ -10,7 +10,7 @@ APP_NAME = "Tutorial Runner"
 class State:
     def __init__(self):
         self.app_dir = click.get_app_dir(APP_NAME)
-        self.state_file_path = Path(self.app_dir, "tutorial-state.toml")
+        self.state_file_path = str(Path(self.app_dir, "tutorial-state.toml"))
 
     def save(self, new_state):
         with open(self.state_file_path, mode="w", encoding="utf-8") as statefile:
