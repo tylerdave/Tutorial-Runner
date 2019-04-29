@@ -97,7 +97,13 @@ def status(obj):
 
 
 def run_lesson(lesson_test_file):
-    result = pytest.main(["-vx", "{0}".format(lesson_test_file)])
+    try:
+        import pytest_clarity
+        extra_args = ['--diff-type=unified', '--no-hints']
+    except ImportError:
+        extra_args = []
+    pytest_args = extra_args + ["-vx", "{0}".format(lesson_test_file)]
+    result = pytest.main(pytest_args)
     if result == 0:
         return True
     else:
