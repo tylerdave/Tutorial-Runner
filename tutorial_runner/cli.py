@@ -158,6 +158,7 @@ def check(ctx, obj):
         click.echo(
             "Review the lesson instructions and the test output above and try again!"
         )
+        sys.exit(1)
 
 
 @tutorial.command()
