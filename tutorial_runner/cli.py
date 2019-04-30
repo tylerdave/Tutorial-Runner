@@ -71,6 +71,8 @@ def lesson(obj, lesson_id, part_id):
     click.echo("\nWorking file: {}".format(working_path))
     if lesson["test"]:
         click.echo("   Test file: {}".format(test_path))
+    if lesson["part"].get("command"):
+        click.echo("     Command: {}".format(lesson["part"]["command"]))
     if lesson.get("doc-urls"):
         click.echo("Related docs: {}".format(lesson.get('doc-urls')))
     if lesson.get("objectives"):
@@ -191,9 +193,9 @@ def solve(obj, yes):
     click.echo(
         "This will make a backup of the working file and then copy the solution file into place."
     )
-    click.echo("  Working file: {}".format(working_path))
-    click.echo("   Backup file: {}".format(backup_path))
-    click.echo(" Solution file: {}".format(solution_path))
+    click.echo("  Working file: {}".format(working_path.relative_to(Path.cwd())))
+    click.echo("   Backup file: {}".format(backup_path.relative_to(Path.cwd())))
+    click.echo(" Solution file: {}".format(solution_path.relative_to(Path.cwd())))
     if not yes:
         click.confirm("Do you wish to proceed?", abort=True)
     click.echo("Making backup file: {}".format(backup_path))
