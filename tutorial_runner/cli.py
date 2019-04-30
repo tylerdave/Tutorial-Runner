@@ -1,11 +1,11 @@
 import sys
 import click
-import pathlib
 import pkg_resources
 import pytest
 import shutil
 
 from datetime import datetime
+from pathlib import Path
 
 from tutorial_runner.state import State
 
@@ -60,12 +60,17 @@ def lesson(obj, lesson_id, part_id):
         lesson_id = state.get_current_lesson_id()
     state.set_current_lesson(part_id, lesson_id)
     lesson = state.get_current_lesson()
-    working_path = pathlib.Path(
+    working_path = Path(
         lesson["tutorial_dir"], lesson["part"]["dir"], lesson["part"]["file"]
-    )
-
+    ).relative_to(Path.cwd())
+    if lesson["test"]:
+        test_path = Path(
+            lesson["tutorial_dir"], lesson["part"]["dir"], 'tests', lesson["test"]
+        ).relative_to(Path.cwd())
     click.echo("Currently working on Part {:02d}, Lesson {:02d} - {}".format(part_id, lesson_id, lesson['name']))
     click.echo("\nWorking file: {}".format(working_path))
+    if lesson["test"]:
+        click.echo("   Test file: {}".format(test_path))
     if lesson.get("doc-urls"):
         click.echo("Related docs: {}".format(lesson.get('doc-urls')))
     if lesson.get("objectives"):
@@ -102,7 +107,7 @@ def run_lesson(lesson_test_file):
         extra_args = ['--diff-type=unified', '--no-hints']
     except ImportError:
         extra_args = []
-    pytest_args = extra_args + ["-vx", "{0}".format(lesson_test_file)]
+    pytest_args = extra_args + ["--disable-pytest-warnings", "-vx", "{0}".format(lesson_test_file)]
     result = pytest.main(pytest_args)
     if result == 0:
         return True
@@ -118,7 +123,7 @@ def check(ctx, obj):
     state = obj["state"]
     current_lesson = state.get_current_lesson()
     test_path = str(
-        pathlib.Path(
+        Path(
             current_lesson["tutorial_dir"],
             current_lesson["part"]["dir"],
             "tests",
@@ -150,7 +155,7 @@ def peek(obj):
     state = obj["state"]
     lesson = state.get_current_lesson()
     solution_path = str(
-        pathlib.Path(
+        Path(
             lesson["tutorial_dir"],
             lesson["part"]["dir"],
             "solutions",
@@ -171,16 +176,16 @@ def solve(obj, yes):
     """Copy the solution file to the working file."""
     state = obj["state"]
     lesson = state.get_current_lesson()
-    solution_path = pathlib.Path(
+    solution_path = Path(
         lesson["tutorial_dir"], lesson["part"]["dir"], "solutions", lesson["solution"]
     )
-    working_path = pathlib.Path(
+    working_path = Path(
         lesson["tutorial_dir"], lesson["part"]["dir"], lesson["part"]["file"]
     )
     backup_filename = lesson["part"]["file"].replace(
         ".py", ".{}.py".format(datetime.now().strftime("%Y-%m-%d.%H-%M-%S"))
     )
-    backup_path = pathlib.Path(
+    backup_path = Path(
         lesson["tutorial_dir"], lesson["part"]["dir"], backup_filename
     )
     click.echo(
