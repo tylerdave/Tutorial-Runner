@@ -54,10 +54,13 @@ def init(obj, config, reinitialize):
 def lesson(obj, lesson_id, part_id):
     """Switch to a specific lesson"""
     state = obj["state"]
+    if lesson_id is None:
+        if part_id is not None:
+            lesson_id = 1
+        else:
+          lesson_id = state.get_current_lesson_id()
     if part_id is None:
         part_id = state.get_current_part_id()
-    if lesson_id is None:
-        lesson_id = state.get_current_lesson_id()
     state.set_current_lesson(part_id, lesson_id)
     lesson = state.get_current_lesson()
     working_path = Path(
