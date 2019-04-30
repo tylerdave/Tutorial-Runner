@@ -63,17 +63,21 @@ def lesson(obj, lesson_id, part_id):
         part_id = state.get_current_part_id()
     state.set_current_lesson(part_id, lesson_id)
     lesson = state.get_current_lesson()
-    working_path = Path(
-        lesson["tutorial_dir"], lesson["part"]["dir"], lesson["part"]["file"]
-    ).relative_to(Path.cwd())
-    if lesson["test"]:
+    if lesson["part"].get("file"):
+        working_path = Path(
+            lesson["tutorial_dir"], lesson["part"]["dir"], lesson["part"]["file"]
+        ).relative_to(Path.cwd())
+    else:
+        working_path = 'n/a'
+    if lesson.get("test"):
         test_path = Path(
             lesson["tutorial_dir"], lesson["part"]["dir"], 'tests', lesson["test"]
         ).relative_to(Path.cwd())
+    else:
+        test_path = 'n/a'
     click.echo("Currently working on Part {:02d}, Lesson {:02d} - {}".format(part_id, lesson_id, lesson['name']))
     click.echo("\nWorking file: {}".format(working_path))
-    if lesson["test"]:
-        click.echo("   Test file: {}".format(test_path))
+    click.echo("   Test file: {}".format(test_path))
     if lesson["part"].get("command"):
         click.echo("     Command: {}".format(lesson["part"]["command"]))
     if lesson.get("doc-urls"):
@@ -127,15 +131,18 @@ def check(ctx, obj):
     """Check your work for the current lesson."""
     state = obj["state"]
     current_lesson = state.get_current_lesson()
-    test_path = str(
-        Path(
-            current_lesson["tutorial_dir"],
-            current_lesson["part"]["dir"],
-            "tests",
-            current_lesson["test"],
+    if current_lesson.get("test"):        
+        test_path = str(
+            Path(
+                current_lesson["tutorial_dir"],
+                current_lesson["part"]["dir"],
+                "tests",
+                current_lesson["test"],
+            )
         )
-    )
-    result = run_lesson(test_path)
+        result = run_lesson(test_path)
+    else:
+        result = True
     if result:
         click.secho("All tests passed!", fg="green")
         next_lesson = state.complete_lesson(
@@ -159,20 +166,22 @@ def peek(obj):
     """Look at the solution file without overwriting your work."""
     state = obj["state"]
     lesson = state.get_current_lesson()
-    solution_path = str(
-        Path(
-            lesson["tutorial_dir"],
-            lesson["part"]["dir"],
-            "solutions",
-            lesson["solution"],
+    if lesson.get("solution"):
+        solution_path = str(
+            Path(
+                lesson["tutorial_dir"],
+                lesson["part"]["dir"],
+                "solutions",
+                lesson["solution"],
+            )
         )
-    )
-    with open(solution_path) as solutionfile:
-        solution_source = solutionfile.read()
-    click.echo("Solution in {}:\n --------------------".format(solution_path))
-    click.echo(solution_source)
-    click.echo(" --------------------\n")
-
+        with open(solution_path) as solutionfile:
+            solution_source = solutionfile.read()
+        click.echo("Solution in {}:\n --------------------".format(solution_path))
+        click.echo(solution_source)
+        click.echo(" --------------------\n")
+    else:
+        click.echo("No solution file for this lesson.")
 
 @tutorial.command()
 @click.pass_obj
@@ -181,6 +190,9 @@ def solve(obj, yes):
     """Copy the solution file to the working file."""
     state = obj["state"]
     lesson = state.get_current_lesson()
+    if not lesson.get("solution"):
+        click.echo("No solution file for this lesson. Just run `tutorial check` to proceed.")
+        return
     solution_path = Path(
         lesson["tutorial_dir"], lesson["part"]["dir"], "solutions", lesson["solution"]
     )
