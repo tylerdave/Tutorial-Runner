@@ -100,7 +100,8 @@ def status(obj):
     )
     click.echo(" Tutorial base dir: {}".format(lesson["tutorial_dir"]))
     click.echo("       Working dir: {}".format(lesson["part"]["dir"]))
-    click.echo("      Working file: {}".format(lesson["part"]["file"]))
+    if lesson["part"].get("file"):
+        click.echo("      Working file: {}".format(lesson["part"]["file"]))
     parts = state.list_parts()
     click.echo("\nAll lessons\n-----------")
     for part in parts:
